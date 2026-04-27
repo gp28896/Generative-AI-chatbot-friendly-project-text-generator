@@ -3,7 +3,7 @@ import os
 # ===== CONFIG =====
 OUTPUT_FILE = "repo_dump.txt"
 INCLUDE_EXTENSIONS = {
-    ".py", ".txt", ".md", ".java", ".js", ".html", ".css", ".json", ".yaml", ".yml"
+    ".ipynb", ".py", ".txt", ".md", ".java", ".js", ".html", ".css", ".json", ".yaml", ".yml"
 }
 EXCLUDE_DIRS = {
     ".git", "__pycache__", "node_modules", "venv", ".idea", ".vscode", "dist", "build"
