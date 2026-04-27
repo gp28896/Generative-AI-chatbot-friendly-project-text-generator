@@ -1,0 +1,1238 @@
+===== REPO STRUCTURE =====
+WMS_Flask/
+  dump_repo.py
+  repo_dump.txt
+  setup_wms.sh
+  WMS-Simulator-Flask/
+    .gitignore
+    README.md
+    requirements.txt
+    run.py
+    app/
+      config.py
+      __init__.py
+      api/
+        inventory_routes.py
+        order_routes.py
+        product_routes.py
+        routes.py
+        __init__.py
+      events/
+        event_logger.py
+        event_types.py
+        __init__.py
+      exceptions/
+        custom_exceptions.py
+        error_handlers.py
+        __init__.py
+      models/
+        inventory.py
+        order.py
+        order_item.py
+        product.py
+        __init__.py
+      repositories/
+        csv_repository.py
+        event_repo.py
+        inventory_repo.py
+        json_repository.py
+        order_item_repo.py
+        order_repo.py
+        product_repo.py
+        __init__.py
+      services/
+        allocation_service.py
+        inventory_service.py
+        order_service.py
+        product_service.py
+        shipment_service.py
+        __init__.py
+      utils/
+        file_lock.py
+        id_generator.py
+        time_utils.py
+        validators.py
+        __init__.py
+    data/
+      csv/
+        inventory.csv
+        orders.csv
+        order_items.csv
+        products.csv
+      json/
+        config.json
+        events.json
+    docs/
+      api_contract.md
+      architecture.md
+      flow_diagrams.md
+    notebooks/
+      wms_simulation.ipynb
+    scripts/
+      reset_data.py
+      seed_data.py
+      simulate_orders.py
+    tests/
+      test_allocation.py
+      test_inventory.py
+      test_order_flow.py
+      __init__.py
+
+===== FILE CONTENTS =====
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\dump_repo.py =====
+import os
+
+# ===== CONFIG =====
+OUTPUT_FILE = "repo_dump.txt"
+INCLUDE_EXTENSIONS = {
+    ".py", ".txt", ".md", ".java", ".js", ".html", ".css", ".json", ".yaml", ".yml"
+}
+EXCLUDE_DIRS = {
+    ".git", "__pycache__", "node_modules", "venv", ".idea", ".vscode", "dist", "build"
+}
+MAX_FILE_SIZE = 200 * 1024  # 200 KB per file
+
+# ==================
+
+def is_text_file(file_path):
+    _, ext = os.path.splitext(file_path)
+    return ext.lower() in INCLUDE_EXTENSIONS
+
+
+def should_skip_dir(dirname):
+    return dirname in EXCLUDE_DIRS
+
+
+def generate_tree(root_dir):
+    tree_lines = []
+    for root, dirs, files in os.walk(root_dir):
+        dirs[:] = [d for d in dirs if not should_skip_dir(d)]
+
+        level = root.replace(root_dir, "").count(os.sep)
+        indent = "  " * level
+        tree_lines.append(f"{indent}{os.path.basename(root)}/")
+
+        sub_indent = "  " * (level + 1)
+        for f in files:
+            tree_lines.append(f"{sub_indent}{f}")
+    return "\n".join(tree_lines)
+
+
+def dump_files(root_dir, out):
+    for root, dirs, files in os.walk(root_dir):
+        dirs[:] = [d for d in dirs if not should_skip_dir(d)]
+
+        for file in files:
+            path = os.path.join(root, file)
+
+            if not is_text_file(path):
+                continue
+
+            if os.path.getsize(path) > MAX_FILE_SIZE:
+                out.write(f"\n===== SKIPPED (TOO LARGE): {path} =====\n")
+                continue
+
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    content = f.read()
+
+                out.write(f"\n===== FILE: {path} =====\n")
+                out.write(content + "\n")
+
+            except Exception as e:
+                out.write(f"\n===== ERROR READING: {path} =====\n{e}\n")
+
+
+def main():
+    root_dir = os.getcwd()
+
+    with open(OUTPUT_FILE, "w", encoding="utf-8") as out:
+        out.write("===== REPO STRUCTURE =====\n")
+        out.write(generate_tree(root_dir))
+
+        out.write("\n\n===== FILE CONTENTS =====\n")
+        dump_files(root_dir, out)
+
+    print(f"Dump created: {OUTPUT_FILE}")
+
+
+if __name__ == "__main__":
+    main()
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\repo_dump.txt =====
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\README.md =====
+# WMS Simulator (Flask)
+
+A lightweight **Warehouse Management System (WMS) simulator** built using Flask, CSV, and JSON.
+
+This project models real-world backend concepts like:
+
+* inventory management
+* order lifecycle
+* stock allocation
+* event logging
+
+without using a traditional database.
+
+---
+
+# Architecture Overview
+
+```text
+API Layer → Services → Repositories → CSV/JSON Files
+```
+
+* **Services** → Business logic (allocation, shipment)
+* **Repositories** → Data access abstraction
+* **CSV** → Relational-style storage
+* **JSON** → Event logging
+
+---
+
+# Project Structure
+
+```text
+WMS-Simulator-Flask/
+│
+├── app/
+├── data/
+│   ├── csv/
+│   └── json/
+├── scripts/
+├── tests/
+├── run.py
+```
+
+---
+
+# Setup & Run Instructions
+
+## 1. Navigate to project
+
+```bash
+cd WMS-Simulator-Flask
+```
+
+---
+
+## 2. Create virtual environment
+
+```bash
+python -m venv venv
+source venv/Scripts/activate   # Git Bash (Windows)
+# OR
+venv\Scripts\activate          # CMD
+```
+
+---
+
+## 3. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+# Step 1: Reset Data (IMPORTANT)
+
+```bash
+python scripts/reset_data.py
+```
+
+ This clears:
+
+* all CSV files
+* all JSON logs
+
+---
+
+# Step 2: Seed Initial Data
+
+```bash
+python scripts/seed_data.py
+```
+
+This creates:
+
+* sample products
+* initial inventory in warehouses
+
+---
+
+# Step 3: Verify Data Creation
+
+Open these files:
+
+```text
+data/csv/products.csv
+data/csv/inventory.csv
+```
+
+### You should see:
+
+**products.csv**
+
+```text
+sku,name,category,weight
+SKU1,Laptop,Electronics,2.5
+...
+```
+
+**inventory.csv**
+
+```text
+warehouse_id,sku,quantity
+WH1,SKU1,50
+...
+```
+
+If these are populated → your system is working correctly.
+
+---
+
+# Step 4: Run Flask Server
+
+```bash
+python run.py
+```
+
+Open:
+
+```text
+http://127.0.0.1:5000
+```
+
+You should see:
+
+```json
+{"msg": "WMS Running"}
+```
+
+---
+
+# Step 5: Simulate Orders
+
+```bash
+python scripts/simulate_orders.py
+```
+
+### Expected output:
+
+```text
+Order <id> allocated
+Order <id> failed: Insufficient stock
+```
+
+---
+
+# Step 6: Verify Inventory Changes
+
+Open:
+
+```text
+data/csv/inventory.csv
+```
+
+Quantities should **decrease** after allocation.
+
+---
+
+# Step 7: Verify Event Logging
+
+Open:
+
+```text
+data/json/events.json
+```
+
+You should see entries like:
+
+```json
+[
+  {
+    "event": "SHIP",
+    "order_id": "...",
+    "sku": "SKU1",
+    "quantity": 2,
+    "timestamp": "..."
+  }
+]
+```
+
+---
+
+# Running Tests
+
+```bash
+pytest
+```
+
+---
+
+# What This Confirms
+
+If all steps work, your system is successfully:
+
+* Creating products
+* Storing inventory
+* Creating orders
+* Allocating stock
+* Updating inventory
+* Logging events
+
+---
+
+# Upcoming changes
+
+* Replace CSV with DB
+* Concurrency handling
+* Upgraded allocation logic
+* Making code production-ready
+* Addition of Redis for locking
+---
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\requirements.txt =====
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\run.py =====
+from app import create_app
+
+
+app = create_app()
+
+
+if __name__ == "__main__":
+	app.run(debug = True)
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\config.py =====
+import os
+
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+DATA_DIR = os.path.join(BASE_DIR, "data")
+CSV_DIR = os.path.join(DATA_DIR, "csv")
+JSON_DIR = os.path.join(DATA_DIR, "json")
+
+PRODUCTS_CSV = os.path.join(CSV_DIR, "products.csv")
+INVENTORY_CSV = os.path.join(CSV_DIR, "inventory.csv")
+ORDERS_CSV = os.path.join(CSV_DIR, "orders.csv")
+ORDER_ITEMS_CSV = os.path.join(CSV_DIR, "order_items.csv")
+
+EVENTS_JSON = os.path.join(JSON_DIR, "events.json")
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\__init__.py =====
+from flask import Flask
+from app.api.routes import register_routes
+
+def create_app():
+    app = Flask(__name__)
+    register_routes(app)
+    return app
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\api\inventory_routes.py =====
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\api\order_routes.py =====
+from flask import request, jsonify
+from app.services.order_service import OrderService
+from app.services.allocation_service import AllocationService
+
+
+order_service = OrderService()
+allocation_service = AllocationService()
+
+
+def register_order_routes(app):
+
+	@app.route("/orders", methods = ["POST"])
+	def create_order():
+		data = request.json
+		order_id = order_service.create_order(data["items"])
+		return jsonify({"order_id": order_id})
+
+
+	@app.route("/orders/allocate", methods=["POST"])
+	def allocate():
+			data = request.json
+			allocation_service.allocate(data["items"])
+			return {"Status": "Allocated"}
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\api\product_routes.py =====
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\api\routes.py =====
+from app.api.order_routes import register_order_routes
+
+
+def register_routes(app):
+	register_order_routes(app)
+
+
+	@app.route("/")
+	def home():
+		
+		return {"Message": "WMS Running"}
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\api\__init__.py =====
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\events\event_logger.py =====
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\events\event_types.py =====
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\events\__init__.py =====
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\exceptions\custom_exceptions.py =====
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\exceptions\error_handlers.py =====
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\exceptions\__init__.py =====
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\models\inventory.py =====
+from dataclasses import dataclass, asdict
+
+
+@dataclasses
+class Inventory:
+
+	# Why dataclass?
+	# Less boilerplate
+	# Readable
+	# Immutable-like behavior (if you choose to enforce)
+
+	warehouse_id: str
+	sku: str
+	quantity: int
+
+
+	def validate(self):
+		
+		if not self.warehouse_id:
+			raise ValueError("Warehouse ID required")
+		if not self.sku
+			raise ValueError("SKU required")
+		if int(self.quantity) < 0:
+			raise ValueError("quantity can't be negative")
+
+
+	# why to_dict, from_dict? 
+	# Because:
+	# CSV stores strings
+	# Your services should not deal with raw dicts
+	# This creates a clean boundary:
+	# CSV ↔ Repository ↔ Model ↔ Service
+
+	def to_dict(self):
+		
+		# for csv compatibility, csv stores everything as strings
+		return {
+			"warehouse_id": self.warehouse_id,
+			"sku": self.sku,
+			"quantity": str(self.quantity) 
+
+		}
+
+
+	@staticmethod
+	def from_dict(data: dict):
+
+		return Inventory(
+				warehouse_id = data["warehouse_id"],
+				sku = data["sku"],
+				quantity = int (data["quantity"])
+			)
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\models\order.py =====
+from dataclasses import dataclasses
+from datetime import datetime
+
+@dataclass:
+class Order:
+	order_id: str
+	status: str
+	timestamp: str = datetime.utcnow().isformat()
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\models\order_item.py =====
+from dataclass import dataclass, asdict
+
+@dataclass
+class OrderItem:
+	
+	order_id: str
+	sku: str
+	quantity: int
+
+
+	def validate(self):
+		
+		if not self.order_id: 
+			raise ValueError("Order ID required")
+		if not self.sku:
+			raise ValueError("SKU required")
+		if int(self.quantity) <= 0:
+				raise ValueError("Quantity must be greater than zero")
+
+
+	def to_dict(self):
+		
+		return {
+			"order_id": self.order_id,
+			"sku": self.sku,
+			"quantity": str(self.quantity) # CSV compatibility
+
+		}
+
+
+	@staticmethod
+	def from_dict(data: dict):
+		
+		return OrderItem(
+				order_id = data["order_id"],
+				sku = data["sku"],
+				quantity = int(data["quantity"])
+			)
+
+
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\models\product.py =====
+from dataclass import dataclass, asdict
+
+
+@dataclass
+class Product:
+	
+	sku: str
+	name: str
+	category: str
+	weight: float
+
+
+	def validate(self):
+
+		if not self.sku:
+			raise ValueError("SSKU is required")
+		if self.weight:
+			raise ValueError("Weight cannot be negative")
+
+
+	def to_dict(self):
+
+		return asdict(self)
+
+
+	@staticmethod
+	def from_dict(data: dict):
+
+		return Product(
+				sku = data["sku"],
+				name = data["name"],
+				category = data["category"],
+				weight = float(data["weight"])
+			)
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\models\__init__.py =====
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\repositories\csv_repository.py =====
+import json
+
+
+class JSONRepository:
+
+
+    def __init__(self, file_path: str):
+
+        self.file_path = file_path
+
+
+    def read(self):
+
+        try:
+            with open(self.file_path, "r") as f:
+                return json.load(f)
+
+        except:
+            return []
+
+
+    def write(self, data):
+
+        with open(self.file_path, "w") as f:
+            json.dump(data, f, indent = 2)
+
+
+    def append(self, item):
+
+        data = self.read()
+        data.append(item)
+        self.write(data)
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\repositories\event_repo.py =====
+from app.repositories.json_repository import JSONRepository
+from app.config import EVENTS_JSON
+
+
+class EventRepository:
+
+
+	def __init__(self):
+
+		self.repo = JSONRepository(EVENTS_JSON)
+
+
+	def log_event(self, event: dict):
+
+		self.repo.append(event)
+
+
+	def get_all_events(self):
+
+		return self.repo.read()
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\repositories\inventory_repo.py =====
+from typing import List
+from app.repositories.csv_repository import CSVRepository
+from app.models.inventory import Inventory
+from app.config import INVENTORY_CSV
+
+
+class InventoryRepository:
+
+
+	def __init__(self):
+
+		self.repo = CSVRepository(
+				INVENTORY_CSV,
+				["warehouse_id", "sku", "quantity"]
+			)
+
+	def get_all(self) -> List[Inventory]:
+
+		rows = self.repo.read_all()
+		return [Inventory.from_dict(r) for r in rows]
+
+
+	def save(self, inventory: Inventory):
+		
+		inventory.validate()
+		self.repo.append(inventory.to_dict())
+
+
+	def update_all(self, inventories: List[Inventory]):
+
+		rows = [inv.to_dict() for inv in inventories]
+		self.repo.write_all(rows)
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\repositories\json_repository.py =====
+import json
+
+class JSONRepository:
+	def __init__(self, file_path: str):
+		self.file_path = file_path
+
+	def read(self):
+		try:
+			with open(self.file_path, "r") as f:
+				return json.load(f)
+
+		except:
+			return []
+
+	def write(self, data):
+			with open(self.file_path, "w") as f:
+				json.dump(data, f, indent = 2)
+
+	def append(self, item):
+			data = self.read()
+			data.append(item)
+			self.write(data)
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\repositories\order_item_repo.py =====
+from typing import List
+from app.repositories.csv_repository import CSVRepository
+from app.models.order_item import OrderItem
+from app.config import ORDER_ITEMS_CSV
+
+
+class OrderItemRepository:
+
+
+	def __init__(self):
+
+		self.repo = CSVRepository(
+				ORDER_ITEMS_CSV,
+				["order_id", "sku", "quantity"]
+			)
+
+
+	def save(self, item: OrderItem):
+
+		item.validate()
+		self.repo.append(item.to_dict())
+
+
+	def get_order_by_id(self, order_id: str1) -> List[OrderItem]:
+
+		rows = self.repo.read_all()
+		return [
+			OrderItem.from_dict(r)
+			for r in rows
+			if r["order_id"] == order_id
+		]
+
+
+	def get_all(self) -> List[OrderItem]:
+
+		rows = self.repo.read_all()
+		return [OrderItem.from_dict(r) fro r in rows]
+
+
+	def delete_by_order_id(slef, order_id: str):
+
+		rows = self.repo.read_all()
+		filtered = [r fro r in rows if r["order_id"] != order_id]
+		self.repo.write_all(filtered)
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\repositories\order_repo.py =====
+from typing import List
+from app.repositories.csv_repository import CSVRepository
+from app.models.order import Order
+from app.config import ORDERS_CSV
+
+
+class OrderRepository:
+
+
+	def __init__(self):
+
+		self.repo = CSVRepository(
+					ORDERS_CSV,
+					["order_id", "status", "timestamp"]
+			)
+
+
+	def save(self, order: Order):
+
+		self.repo.append({
+			"order_id": order.order_id,
+			"status": order.status,
+			"timestamp": order.timestamp
+			})
+
+
+	def get_all(self) -> List[Order]:
+
+		rows = self.repo.read_all()
+		return [Order(**r) for r in rows]
+
+
+	def update_all(self, orders: List[Order]):
+
+		rows = [o.__dict__ for o in orders]
+		self.repo.write_all(rows)
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\repositories\product_repo.py =====
+from typing import List, Optional
+from app.repositories.csv_repository import CSVRepository
+from app.models.product import Product
+from app.config import PRODUCTS_CSV
+
+
+class ProductRepository:
+
+
+	def __init__(self):
+		
+		self.repo = CSVRepository(
+				PRODUCTS_CSV,
+				["sku", "name", "category", "weight"]
+			)
+
+
+	def get_all(self) -> List[Product]:
+
+		rows = self.repo.read_all()
+		return [Product.from_dict(r) for r in rows]
+
+
+	def get_by_sku(self, sku: str) -> Optional[Product]:
+
+		for product in self.get_all():
+			if product.sku == sku:
+				return product
+
+		return None
+
+
+	def save(self, product: Product):
+
+		product.validate()
+		self.repo.append(product.to_dict())
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\repositories\__init__.py =====
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\services\allocation_service.py =====
+from app.services.inventory_service import Inventory_service
+
+
+class AllocationService:
+	
+
+	def __init__(self):
+
+		self.inventory_service = InventoryService()
+
+
+	def allocate(self, items):
+		
+		for item in items:
+			stock = self.inventory_service.get_stock(intem["sku"])
+			if stock < item["quantity"]:
+				raise Exception(f"Insufficient stock for {item["sku"]}")
+
+		# deduct
+		for item in items:
+			self.inventory_service.reduce_stock(item["sku"], item["quantity"])
+
+		return True
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\services\inventory_service.py =====
+from app.repositories.cv_repository import CSVRepository
+from app.config import INVENTORY_CSV
+
+class InventoryService:
+
+	def __init__(self):
+
+		self.repo = CSVRepository(
+					INVENTORY_CSV, 
+					["warehouse_id", "sku", "quantity"]
+			)
+
+
+	def get_stock(self, sku: str) -> int:
+
+		rows = self.repo.read_all()
+		return sum(int(r["quantity"])for r in rows if r["sku"] == sku)		
+
+
+	def add_stock(self, warehouse_id: str, sku: str, quantity: int):
+
+		self.repo.append(
+				"warehouse_id": warehouse_id,
+				"sku": sku,
+				"quantity": quantity
+			)
+
+
+	def reduce_stock(self, warehouse_id: str, quantity: int):
+		
+		rows = self.repo_read_all()
+		remaining = quantity
+
+		for r in rows:
+			if r["sku"] == sku and remaining > 0:
+				available = int(r["quantity"])
+				deduction = min(available, remaining)
+				r["quantity"] = str(available - deduction)
+				remaining -= deduction
+
+		if remaining > 0:
+			raise Exception("Insufficient stock. ")
+
+		self.repo_write_all(rows)
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\services\order_service.py =====
+import uuid
+from app.repositories.cv_repository import CSVRepository
+from app.config import ORDERS_CSV, ORDER_ITEMS_CSV
+
+
+class OrderServices:
+	
+
+	def __init__(self):
+		
+		self.order_repo = CSVRepository(
+				ORDER_ITEMS_CSV,
+				["order_id", "status", "timestamp"]
+			)
+		self.item_repo = CSVRepository(
+				ORDER_ITEMS_CSV,
+				["order_id", "sku", "quantity"]
+			)
+
+
+	def create_order(self, items):
+		
+		order_id = str(uuid.uuid4())
+		self.order_repo.append(
+				{
+					"order_id": order_id,
+					"sku": item["sku"],
+					"quantity": intem["quantity"]
+				}
+			)
+		
+		return order_id
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\services\product_service.py =====
+from app.repositories.product_repo import ProductRepository
+from app.models.product import Product
+
+
+class ProductService:
+
+
+	def __init__(self):
+
+		self.repo = ProductRepository()
+
+
+	def create_product(self, data: dict):
+
+		product = Product.from_dict(data)
+		product.validate()
+
+		existing = self.repo.get_by_sku(sku)
+		if not product:
+			raise Exception("Product not found for mentioned sku")
+
+		return product
+
+
+	def get_all_products(self):
+
+		return self.repo.get_all()
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\services\shipment_service.py =====
+from app.repositories.order_repo import OrderRepository
+from app.repositories.order_item_repo import OrderItemRepository
+from app.repositories.event_repo import EventRepository
+from app.utils.time_utils import current_timestamp
+
+
+class ShipmentService:
+
+
+	def __init__(self):
+
+		self.order_repo = OrderRepository()
+		self.item_repo = OrderItemRepository()
+		self.event_repo = EventRepository()
+
+
+	def ship_order(self, order_id: str):
+
+		orders = self.order_repo.get_all()
+
+		for order in orders:
+			if order.order_id == order_Id:
+				if order.status != "ALLOCATED":
+					raise Exception ("Order must be allocated before shipping")
+
+				order.staus = "SHIPPED"
+				break
+
+		else:
+			raise Exception("Order not found")
+
+		self.order_repo.update_all(orders)
+
+		items = self.item_repo.get_by_order_id(order_id)
+
+		for item in items: 
+			self.event__repo.log_event({
+				"event": "SHIP",
+				"order_id": order_id,
+				"sku": item.sku,
+				"quantity": item.quantity,
+				"timestamp": current_timestamp()
+				})
+
+		return True
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\services\__init__.py =====
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\utils\file_lock.py =====
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\utils\id_generator.py =====
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\utils\time_utils.py =====
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\utils\validators.py =====
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\app\utils\__init__.py =====
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\data\json\config.json =====
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\data\json\events.json =====
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\docs\api_contract.md =====
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\docs\architecture.md =====
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\docs\flow_diagrams.md =====
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\scripts\reset_data.py =====
+import os
+from app.config import CSV_DIR, JSON_DIR
+
+
+CSV_HEADERS = {
+    "products.csv": "sku,name,category,weight\n",
+    "inventory.csv": "warehouse_id,sku,quantity\n",
+    "orders.csv": "order_id,status,timestamp\n",
+    "order_items.csv": "order_id,sku,quantity\n",
+}
+
+
+def reset_files():
+
+    for file, header in CSV_HEADERS.items():
+        path = os.path.join(CSV_DIR, file)
+        with open(path, "w") as f:
+            f.write(header)
+
+    for file in os.listdir(JSON_DIR):
+        path = os.path.join(JSON_DIR, file)
+        with open(path, "w") as f:
+            f.write("[]")
+
+if __name__ == "__main__":
+
+	reset_files()
+	print("Data reset completed successfully")	
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\scripts\seed_data.py =====
+from app.services.product_service import ProductService
+from app.services.inventory_service import InventoryService
+
+
+product_service = ProductService()
+inventory_service = InventoryService()
+
+
+def seed():
+	
+	products = [
+        {"sku": "SKU1", "name": "Laptop", "category": "Electronics", "weight": 2.5},
+        {"sku": "SKU2", "name": "Phone", "category": "Electronics", "weight": 0.5},
+        {"sku": "SKU3", "name": "Chair", "category": "Furniture", "weight": 7.0},
+    ]
+    
+    for p in products:
+    	try:
+    		product_service.create_product(p)
+    	except:
+    		pass
+
+
+	inventory_service.add_stock("WH1", "SKU1", 50)    
+	inventory_service.add_stock("WH1", "SKU2", 100)
+    inventory_service.add_stock("WH2", "SKU3", 20)
+
+
+
+if __name__ == "__main__":
+	seed()
+	print("Data seeded successfully")
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\scripts\simulate_orders.py =====
+import random
+from app.services.order_service import order_service
+from app.services.allocation_service import AllocationService
+
+
+order_service = OrderService()
+allocation_service = AllocationService()
+
+
+SKUS = ["SKU1", "SKU2", "SKU3"]
+
+
+def simulate(n = 20):
+	for _ in range(n):
+		items = [{
+			"sku": random.choice(SKUS),
+			"quantity": random.randind(1, 5)
+		}]
+
+		order_id = order_service.allocate(items)
+		
+		try:
+			allocation_service.allocate(items)
+			print(f"Order {order_id} allocated")
+		except Exception as e:
+			print(f"Order {order_id} failed to allocate. {e}")
+
+
+if __name__ == "__main__":
+	simulate()
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\tests\test_allocation.py =====
+from app.services.inventory_service import InventoryService
+from app.services.allocation_service import AllocationService
+
+
+def test_allocation_success():
+
+	inv = InventoryService()
+	alloc = AllocationService()
+
+	inv.add_stock("WH1", "SKU_TEST", 10)
+
+	result = alloc.allocate([{"sku": "SKU_TEST", "quantity": 5}])
+	assert result is True
+
+
+def test_allocation_failure():
+	
+	alloc = AllocationService()
+	try:
+		alloc.allocate([{"sku": "INVALID", "quantity": 5}])
+	except:
+		assert True
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\tests\test_inventory.py =====
+from app.services.inventory_service import InventoryService
+
+def test_add_and_get_stock():
+	service = InventoryService()
+	service.add_stock("WH1", "SKU1", 10)
+	assert service.get_stock("SKU1") >= 10
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\tests\test_order_flow.py =====
+
+
+===== FILE: C:\Users\Varun\Desktop\WMS_Flask\WMS-Simulator-Flask\tests\__init__.py =====
+
